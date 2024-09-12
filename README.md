@@ -2,9 +2,9 @@
 
 # 
 
-# Engineering Journal
+# README
 
-# 
+### This is a text-only version of the engineering journal. Please consult engineeringjournal.pdf for a better experiance
 
 # 
 
@@ -78,7 +78,7 @@
 
 #  **Introduction** {#introduction}
 
-Welcome to Team Null's engineering journal.  Team Null is made up of Michael Shepstone (19 years), Raaid (18 years) , our coach Cody Williams and Gremlin, our vehicle's vehicle.  We are from South Africa.  As a team we have been working on the Future Engineering challenge for the past 2 years.  Gremlin, the vehicle, has evolved many times to meet the challenging needs of the Future Engineers Category of the World vehicles Olympiad 2024\. This document is relevant to the current latest version of Gremlin, Gremlin V6.
+Welcome to Team Null's engineering journal.  Team Null is made up of Michael Shepstone (19 years), Raaid (18 years) , our coach Cody Williams and Gremlin, our vehicle's vehicle.  We are from South Africa.  As a team we have been working on the Future Engineering challenge for the past 2 years.  Gremlin, the vehicle, has evolved many times to meet the challenging needs of the Future Engineers Category of the World Robotics Olympiad 2024\. This document is relevant to the current latest version of Gremlin, Gremlin V6.
 
 ## 
 
