@@ -103,8 +103,19 @@ int getDistance(int8_t tfAddr) {
   {
     // sendData("Dist: ");
     //sendDataln(tfDist);          // print the data...
+    if(tfDist == 0){
+    Wire.beginTransmission(tfAddr);
+
+    Wire.endTransmission();
+    }
     return tfDist;
   }
+  
+  
+  delay(100); // Wait for sensor to reset
+  Wire.beginTransmission(tfAddr);
+
+  Wire.endTransmission();
   return -1;
 }
 

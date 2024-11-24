@@ -118,10 +118,10 @@ void printCamera(){
   sendData(getDistance(left45));
   //delay(50);
   sendData("\tRight45: ");
-  sendData(getDistance(right45));
+  sendDataln(getDistance(right45));
 
-   sendData("\tBack: ");
-  sendDataln(getDistance(back));
+  //  sendData("\tBack: ");
+  // sendDataln(getDistance(back));
   //delay(50);
 
 

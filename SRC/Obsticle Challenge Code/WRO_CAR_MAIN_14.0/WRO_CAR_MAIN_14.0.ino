@@ -86,11 +86,13 @@ void setup() {
   hc12.begin(57600);
   Wire1.setSDA(2);
   Wire1.setSCL(3);
+
   Wire1.begin();
 
 
   Wire.setSDA(4);
   Wire.setSCL(5);
+  Wire.setClock(100000);
   Wire.begin();
 
 
@@ -134,9 +136,10 @@ void loop() {
   currentLane = 3;
   targetAngle = 0;
 
-    // while(true){
-    //           printLIDAR();
-    //         }
+    while(true){
+      delay(10);
+              printLIDAR();
+            }
   waitForButton();
 
   //pgoPark();
