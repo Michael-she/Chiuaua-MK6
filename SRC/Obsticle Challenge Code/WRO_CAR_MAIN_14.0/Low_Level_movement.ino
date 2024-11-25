@@ -40,7 +40,7 @@ void waitForWallToBeGone(){
               counterLeft++;
             }
         }
-        if (counterLeft==numShots){
+        if (counterLeft>=numShots){
           if (firstLoop){
             turnRight = false;
             sendDataln("TURNING LEFT!");
@@ -50,15 +50,16 @@ void waitForWallToBeGone(){
           wall = false;
         
         }
-        if (counterRight==numShots){
-          firstLoop = false;
-          wall = false;
+        if (counterRight>=numShots){
+          
           if(firstLoop){
             turnRight = true;
             sendDataln("TURNING RIGHT!");
             //setMotor(0);
 
           }
+          firstLoop = false;
+          wall = false;
          
         }
 
@@ -163,7 +164,7 @@ void waitForWall(int waitPeriod){
         rightCounter = 0;
         
       }
-      if (rightCounter == numShots*waitPeriod && frontDist < 200) {
+      if (rightCounter >= numShots*waitPeriod && frontDist < 200) {
         wallFound = true;
       }
 
@@ -185,7 +186,7 @@ void waitForWall(int waitPeriod){
 
 
 
-      if (leftCounter == numShots*waitPeriod && frontDist < 200) {
+      if (leftCounter >= numShots*waitPeriod && frontDist < 200) {
         wallFound = true;
       
       }
