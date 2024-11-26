@@ -29,13 +29,13 @@ void waitForWallToBeGone(){
         sendDataln(rightDist);
 
         if(turnRight || firstLoop){
-           sendDataln("Waiting for wall - RIGHT");
+           sendDataln("Waiting for wall gone - RIGHT");
                if(rightDist>100){
               counterRight ++;
             }
         }
          if (!turnRight || firstLoop){
-          sendDataln("Waiting for wall - LEFT");
+          sendDataln("Waiting for wall gone - LEFT");
              if(leftDist>100){
               counterLeft++;
             }
@@ -164,7 +164,7 @@ void waitForWall(int waitPeriod){
         rightCounter = 0;
         
       }
-      if (rightCounter >= numShots*waitPeriod && frontDist < 200) {
+      if (rightCounter >= numShots*waitPeriod ) {
         wallFound = true;
       }
 
@@ -186,7 +186,7 @@ void waitForWall(int waitPeriod){
 
 
 
-      if (leftCounter >= numShots*waitPeriod && frontDist < 200) {
+      if (leftCounter >= numShots*waitPeriod && frontDist < 220) {
         wallFound = true;
       
       }
