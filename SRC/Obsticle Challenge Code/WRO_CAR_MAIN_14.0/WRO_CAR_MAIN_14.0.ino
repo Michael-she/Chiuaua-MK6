@@ -152,13 +152,18 @@ void loop() {
   targetAngle = 0;
   setAngle(targetAngle);
   getAngle();
-  setMotor(0);
+  setMotor(7);
 
   firstLoop = true;
   int segment = 0;
  //First movement, go around using camera and save values.
   for(int i = 0 ; i<4; i++){
+    int frontDist = getDistance(front);
+    if(frontDist>150 || frontDist == -1|| i !=0){
     updateLaneMidBlock(segment);
+    }else{
+      sendDataln("1st segment");
+    }
     transferLanes45();
     segment++;
     if(segment == 4){
@@ -241,7 +246,7 @@ void loop() {
 
   delay(200);
   handleGoAround();
-  setMotor(0);
+  //setMotor(0);
 
 
    //Third lap , same direction, just using the built matrix
@@ -271,6 +276,10 @@ void loop() {
     }
   waitForWall(30);
   }
+ // delay(2000);
+  setMotor(0);
+  delay(5500);
+  setMotor(7);
 
 goPark();
 
@@ -300,20 +309,25 @@ void handleGoAround(){
     turn = true;
     sendDataln("condition1");
   }
-  else if (blocks[3][2] == 82 && blocks[0][0] == 0 && blocks[0][1] == 0){
+  else if (blocks[3][2] == 82 && blocks[0][0] == 0){
     turn = true;
     sendDataln("condition2");
   }
-  else if (blocks[3][0] == 82 && blocks[3][2] == 0 && blocks[0][0] == 0 && blocks[0][1] == 0){
+  else if (blocks[3][0] == 82 && blocks[3][2] == 0 && blocks[0][0] == 0){
     turn = true;
     sendDataln("condition3");
   }
- reverseBlocks();
-
+ 
 if(turn){
+  
+turnRight= !(turnRight);
+  reverseBlocks();
+  
+  
   turnAround();
+  delay(500);
 }
- turnRight!=turnRight;
+ 
 
 }
 
@@ -323,17 +337,17 @@ void reverseBlocks(){
 
     //I am too lazy to do this in a more elegant fashion
 
-    reversedBlocks[0][0] = blocks[3][2];
-    reversedBlocks[0][1] = blocks[3][0];
-    reversedBlocks[0][3] = blocks[3][3];
+    reversedBlocks[0][0] = blocks[0][2];
+    reversedBlocks[0][1] = blocks[0][0];
+    reversedBlocks[0][3] = blocks[0][3];
 
-    reversedBlocks[1][0] = blocks[2][2];
-    reversedBlocks[1][1] = blocks[2][0];
-    reversedBlocks[1][3] = blocks[2][3];
+    reversedBlocks[1][0] = blocks[3][2];
+    reversedBlocks[1][1] = blocks[3][0];
+    reversedBlocks[1][3] = blocks[3][3];
 
-    reversedBlocks[2][0] = blocks[1][2];
-    reversedBlocks[2][1] = blocks[1][0];
-    reversedBlocks[2][3] = blocks[1][3];
+    reversedBlocks[2][0] = blocks[2][2];
+    reversedBlocks[2][1] = blocks[2][0];
+    reversedBlocks[2][3] = blocks[2][3];
 
     reversedBlocks[3][0] = blocks[0][2];
     reversedBlocks[3][1] = blocks[0][0];
@@ -367,7 +381,7 @@ void turnAround(){
     targetAngle += 90;
     setAngle(targetAngle);
     waitForTargetAngle();
-    while(getDistance(front) > 15){
+    while(getDistance(front) > 25){
       delay(1);
     }
     targetAngle +=90;
@@ -379,6 +393,8 @@ void turnAround(){
 
 
 void goPark(){
+
+  sendDataln("GOING TO PARK-----------------------------------------");
     setMotor(7);
 
     //I have no more energy to write good code
@@ -387,7 +403,7 @@ void goPark(){
 
     if(blocks[1][3] != 0){
       distance = 0;
-    }else if(blocks[2][3] != 0 || 1==1){
+    }else if(blocks[2][3] != 0){
       distance = 1;
     }else if(blocks[3][3] != 0){
       distance = 2;
@@ -406,13 +422,15 @@ void goPark(){
     
 
     for(int i = 0; i<distance; i++){
-      while(getDistance(sensor) < 100){
+      int distance =getDistance(sensor);
+      while( distance< 120 ){
         delay(1);
+        distance =getDistance(sensor);
       }
-      delay(250);
+      delay(400);
       targetAngle += ajustment;
       setAngle(targetAngle);
-      delay(2000);
+      delay(3000);
 
     }
 
@@ -444,6 +462,36 @@ void goPark(){
       delay(300);
       targetAngle+=90;
     }
+
+    
+    else{
+    while(getDistance(left)<100){  
+      delay(1);
+    }
+    setAngle(targetAngle-60);
+    delay(1000);
+    setAngle(targetAngle);
+    waitForTargetAngle();
+
+    int turnDistance = 47;
+
+    while(getDistance(front)>turnDistance){
+      delay(1);
+
+    }
+    targetAngle -= 90;
+    setAngle(targetAngle);
+    waitForTargetAngle();
+      
+
+
+  
+      while(getDistance(right)>15){
+        delay(1);
+      }
+      delay(300);
+      targetAngle+=90;
+    }
       setAngle(targetAngle);
       //setMotor(7);
       delay(3000);
@@ -457,7 +505,7 @@ void transferLanes45(){
     sendData(" TO ");
     sendDataln(lane);
 
-delay(1000);
+//delay(1000);
   if(currentLane != lane){
   
     
@@ -1252,7 +1300,7 @@ void handleMagenta(int segment){
     }
     strip.show();
 
-    blocks [segment][3] = 77;
+    blocks[segment][3] = 77;
    
 
     for (int i = 0; i<5; i++){ //Roll the camera contents one forward
@@ -1268,7 +1316,7 @@ void handleMagenta(int segment){
                 blocks[i][3] = 0;
               }
           }
-    blocks [segment][3] = 77;
+    blocks[segment][3] = 77;
    
 
     for(int i = 0; i<3; i++){
@@ -1282,10 +1330,10 @@ void handleMagenta(int segment){
 }
 
 void updateLaneMidBlock(int segment){
-  while(getDistance(front)>=210){
+  // while(getDistance(front)>=210){
 
-    sendDataln("Waiting to update lane");
-  }
+  //   sendDataln("Waiting to update lane");
+  // }
  
   getCamera(segment);
   sendDataln("UPDATING CAMERA MID BLOCK");
@@ -1336,13 +1384,13 @@ void updateLaneMidBlock(int segment){
 
 void updateLaneMidBlockBlind(int segment){
 
-  while(getDistance(front)>=210){
+  // while(getDistance(front)>=210){
 
-    sendDataln("Waiting to update lane");
-  }
+  //   sendDataln("Waiting to update lane");
+  // }
  
  sendDataln("Updateing mid lane");
- delay(2000);
+ //delay(2000);
   
   if (blocks[segment][1] == 71){
   

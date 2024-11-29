@@ -69,21 +69,47 @@ int startingLeftDistance = getDistance(left);
     delay(2500);
     waitForTargetAngle();
       waitForWall();
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 1; i++) {
       goFourth();
       waitForTargetAngle();
       waitForWall();
-      delay(500);
-      
+     // delay(500);
+       if(turnRight){
+      targetAngle+=1;//The gyro is off by 3 degrees per lap
+  
+    }else{
+      targetAngle -=1;
+    }
+    if (i%4 ==0){
+      if(turnRight){
+      targetAngle-=1;//The gyro is off by 3 degrees per lap
+  
+    }else{
+      targetAngle+=1;
+    }
+
+    }
     }
        setMotor(7);
     finalMovement(startingLeftDistance, startingRightDistance);
       waitForTargetAngle();
       
  
-   while(getDistance(front)>startingFrontDistace){ // Wait until the distance to the front sensor is less than it was when you started
-     delay(10);
-   }
+ delay(1500);
+int frontDist = getDistance(front);
+int frontCount = 0;
+while(true){
+  if(frontDist<startingFrontDistace && frontDist != -1){
+    frontCount++;
+  }else{
+    frontCount = 0;
+  }
+  if(frontCount > 3){
+    break;
+  }
+  delay(1);
+  frontDist = getDistance(front);
+}
 
    setMotor(0);
  
@@ -132,10 +158,29 @@ distanceFromOutsideWall = leftDistance;
 }else{
   distanceFromOutsideWall = rightDistance;
 }
-while(getDistance(front)>distanceFromOutsideWall+37){
+
+int frontDist = getDistance(front);
+int frontCount = 0;
+while(true){
+  if(frontDist<distanceFromOutsideWall+7 && frontDist != -1){
+    frontCount++;
+  }else{
+    frontCount = 0;
+  }
+  if(frontCount > 3){
+    break;
+  }
   delay(1);
+  frontDist = getDistance(front);
 }
-goFourth();
+if(turnRight){
+  targetAngle -=90;
+   
+      
+}else{
+  targetAngle +=90;
+}
+setAngle(targetAngle);
 
 }
 
@@ -171,7 +216,7 @@ void goFourth() {
         turnRight = true;
         targetAngle -= 90;
         Serial.println("Turning Right");
-        delay(1000);
+       delay(500);
         setAngle(targetAngle);
       }
 
@@ -198,7 +243,7 @@ void goFourth() {
         turnRight = false;
         targetAngle += 90;
         Serial.println("Turning Left");
-        delay(1000);
+        delay(500);
         setAngle(targetAngle);
       }
     }
@@ -300,7 +345,7 @@ void waitForWall(){
         rightCounter = 0;
         
       }
-      if (rightCounter == numShots*5) {
+      if (rightCounter == numShots*1) {
         wallFound = true;
       }
 
@@ -322,7 +367,7 @@ void waitForWall(){
 
 
 
-      if (leftCounter == numShots*5) {
+      if (leftCounter == numShots*1) {
         wallFound = true;
       
       }
