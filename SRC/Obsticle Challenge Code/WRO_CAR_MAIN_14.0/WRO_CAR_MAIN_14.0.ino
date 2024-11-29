@@ -44,6 +44,7 @@ int8_t left45 = 0x59;
 int8_t back = 0x65;
 
 
+int segment = 0;
 
 int hugWallDist = 30;
 
@@ -67,6 +68,7 @@ bool firstLoop = true;
 int loopCount = 0;
 
 bool backwards = false;
+
 
 
 void setup() {
@@ -138,7 +140,8 @@ void loop() {
 
       // while(true){
       //   delay(10);
-      //           printLIDAR();
+      //           getCamera(0);
+      //           printCamera();
       //         }
     waitForButton();
 
@@ -155,11 +158,11 @@ void loop() {
   setMotor(7);
 
   firstLoop = true;
-  int segment = 0;
+   segment = 0;
  //First movement, go around using camera and save values.
   for(int i = 0 ; i<4; i++){
     int frontDist = getDistance(front);
-    if(frontDist>150 || frontDist == -1|| i !=0){
+    if(frontDist>150 || frontDist == -1 || i !=0){
     updateLaneMidBlock(segment);
     }else{
       sendDataln("1st segment");
@@ -214,6 +217,7 @@ void loop() {
     
     updateLaneMidBlockBlind(segment);
     transferLanes45();
+    waitForWallToBeGone();
     segment++;
     if(segment == 4){
       segment = 0;
@@ -245,19 +249,22 @@ void loop() {
   
 
   delay(200);
+  backwards = false;
   handleGoAround();
   //setMotor(0);
 
 
-   //Third lap , same direction, just using the built matrix
+   //Third lap , whatever direction, just using the built matrix
   segment = 0;
   for(int i = 0 ; i<4; i++){
   if(i == 1){
     firstLoop = false;
   }
-   
+    if(!backwards || i != 0){
     updateLaneMidBlockBlind(segment);
     transferLanes45();
+    }
+    waitForWallToBeGone();
     segment++;
     if(segment == 4){
       segment = 0;
@@ -276,8 +283,14 @@ void loop() {
     }
   waitForWall(30);
   }
- // delay(2000);
+ delay(1000);
   setMotor(0);
+   if(turnRight){
+      targetAngle-=2;//The gyro is off by 3 degrees per lap
+  
+    }else{
+      targetAngle +=2;
+    }
   delay(5500);
   setMotor(7);
 
@@ -323,7 +336,7 @@ if(turn){
 turnRight= !(turnRight);
   reverseBlocks();
   
-  
+  backwards = true;
   turnAround();
   delay(500);
 }
@@ -335,35 +348,38 @@ turnRight= !(turnRight);
 void reverseBlocks(){
     int reversedBlocks[4][4];
 
-    //I am too lazy to do this in a more elegant fashion
+    //I am too lazy to do this in a more elegant fashion Referses the map of the field as obsersved by the robot
 
     reversedBlocks[0][0] = blocks[0][2];
-    reversedBlocks[0][1] = blocks[0][0];
+    reversedBlocks[0][2] = blocks[0][0];
     reversedBlocks[0][3] = blocks[0][3];
 
     reversedBlocks[1][0] = blocks[3][2];
-    reversedBlocks[1][1] = blocks[3][0];
+    reversedBlocks[1][2] = blocks[3][0];
     reversedBlocks[1][3] = blocks[3][3];
 
     reversedBlocks[2][0] = blocks[2][2];
-    reversedBlocks[2][1] = blocks[2][0];
+    reversedBlocks[2][2] = blocks[2][0];
     reversedBlocks[2][3] = blocks[2][3];
 
-    reversedBlocks[3][0] = blocks[0][2];
-    reversedBlocks[3][1] = blocks[0][0];
-    reversedBlocks[3][3] = blocks[0][3];
+    reversedBlocks[3][0] = blocks[1][2];
+    reversedBlocks[3][2] = blocks[1][0];
+    reversedBlocks[3][3] = blocks[1][3];
 
+    
     for (int i = 0; i < 4; i++){
-      for (int j = 0; j<4; j++){
+      for (int j = 0; j<4; j++){ // Overwrite the blocks with the reversed array
         blocks[i][j] = reversedBlocks[i][j];
 
       }
     }
 }
 
-void waitToPassTheBlock(int8_t addr){
+void waitToPassTheBlock(int8_t addr){ //Waits to pass the block before continuing. This method is known to cause some problems
 
   int distance  = getDistance(addr);
+  delay(5);
+  int frontDistance = getDistance(front);
   while(distance > 43|| distance == -1){
     distance = getDistance(addr);
     delay(1);
@@ -408,15 +424,17 @@ void goPark(){
     }else if(blocks[3][3] != 0){
       distance = 2;
     }
+    sendData("Distance = ");
+    sendDataln(distance);
     int8_t sensor = 0;
     int ajustment = 0;
     if(turnRight){
       sensor = right;
-      ajustment = -90;
+      ajustment = -91;
 
     }else{
       sensor = left;
-      ajustment = 90;
+      ajustment = 91;
     }
 
     
@@ -438,11 +456,14 @@ void goPark(){
     while(getDistance(right)<100){  
       delay(1);
     }
+    delay(500);
+    if(!(turnRight && lane == 0) || !(!turnRight && lane == 1) ){
     setAngle(targetAngle+60);
     delay(1000);
     setAngle(targetAngle);
     waitForTargetAngle();
 
+    }
     int turnDistance = 47;
 
     while(getDistance(front)>turnDistance){
@@ -456,7 +477,7 @@ void goPark(){
 
 
   
-      while(getDistance(left)>15){
+      while(getDistance(left)>18){
         delay(1);
       }
       delay(300);
@@ -468,10 +489,13 @@ void goPark(){
     while(getDistance(left)<100){  
       delay(1);
     }
+    delay(500);
+    if(!(turnRight && lane == 0) || !(!turnRight && lane == 1) ){
     setAngle(targetAngle-60);
     delay(1000);
     setAngle(targetAngle);
     waitForTargetAngle();
+    }
 
     int turnDistance = 47;
 
@@ -479,18 +503,18 @@ void goPark(){
       delay(1);
 
     }
-    targetAngle -= 90;
+    targetAngle += 90;
     setAngle(targetAngle);
     waitForTargetAngle();
       
 
 
   
-      while(getDistance(right)>15){
+      while(getDistance(right)>18){
         delay(1);
       }
       delay(300);
-      targetAngle+=90;
+      targetAngle-=90;
     }
       setAngle(targetAngle);
       //setMotor(7);
@@ -505,7 +529,7 @@ void transferLanes45(){
     sendData(" TO ");
     sendDataln(lane);
 
-//delay(1000);
+  //delay(1000);
   if(currentLane != lane){
   
     
@@ -522,14 +546,17 @@ void transferLanes45(){
 
     }
     if(lane == 3){
-
-        if(currentLane == 0){
+       sendDataln("3rd lane");
+        if((currentLane == 0)){
+          sendDataln("Moving right");
           sensor = right45;
           tmpAngle -= 45;
         }else{
+          sendDataln("Moving Left");
           sensor = left45;
           tmpAngle+=45;
         }
+        currentLane = 3;
 
 
     }
@@ -540,7 +567,7 @@ void transferLanes45(){
     int distance = getDistance(sensor);
 
     if(lane!= 3){
-    while(distance > exitAjustLength || distance == -1){
+    while(distance > exitAjustLength || distance == -1 || distance == 0){
       distance = getDistance(sensor);
       sendData("Distance to wall 45: ");
       sendDataln(distance);
@@ -620,7 +647,7 @@ void leftTurn(int segment){
               sendDataln("Waiting for disspaear");
             }
             
-            
+            delay(350);
             targetAngle+=90;
             setAngle(targetAngle);
             waitForTargetAngle();
@@ -655,7 +682,7 @@ void leftTurn(int segment){
       }
      
       setAngle(targetAngle+90);
-      waitForAngle(targetAngle+60);
+      waitForAngle(targetAngle+63);
     // setMotor(0);
       //delay(5000);
       getCamera(segment);
@@ -688,7 +715,7 @@ void leftTurn(int segment){
 
             int turnDistance = 0;
             if(blocks[segment][3] == 77){
-              turnDistance = 50;
+              turnDistance = 55;
               lane = 3;
               currentLane = 3;
               sendDataln("I spy magenta");
@@ -738,8 +765,6 @@ void leftTurn(int segment){
   //setMotor(0);
 
 }
-
-
 
 void leftTurnBlind(int segment){
   sendDataln("turning Left");
@@ -817,7 +842,7 @@ void leftTurnBlind(int segment){
       }
      
       setAngle(targetAngle+90);
-      waitForAngle(targetAngle+60);
+      waitForAngle(targetAngle+63);
     // setMotor(0);
       //delay(5000);
       getCamera(segment);
@@ -850,7 +875,7 @@ void leftTurnBlind(int segment){
 
             //TODO Some magenta logic here
             if(blocks[segment][3] == 77){
-              turnDistance = 50;
+              turnDistance = 55;
               lane = 3;
               currentLane = 3;
             }else{
@@ -903,9 +928,8 @@ void leftTurnBlind(int segment){
 
 }
 
-
 void rightTurn(int segment){
-  sendDataln("turning Left");
+  sendDataln("turning Right");
   //setMotor(0);
     if (lane == 1){
 
@@ -936,8 +960,8 @@ void rightTurn(int segment){
               delay(1); // Wait for the block to apear
               sendDataln("Waiting for appear");
               if (getDistance(front)<43){
-                  lane = 1;
-                  currentLane = 1;
+                  lane = 0;
+                  currentLane = 0;
               }
             }
 
@@ -946,7 +970,7 @@ void rightTurn(int segment){
               sendDataln("Waiting for disspaear");
             }
           
-
+            delay(350);
             targetAngle-=90;
             setAngle(targetAngle);
             waitForTargetAngle();
@@ -982,7 +1006,7 @@ void rightTurn(int segment){
       }
      
       setAngle(targetAngle-90);
-      waitForAngle(targetAngle-60);
+      waitForAngle(targetAngle-63);
     // setMotor(0);
       //delay(5000);
       getCamera(segment);
@@ -1012,7 +1036,7 @@ void rightTurn(int segment){
             int turnDistance = 0;
 
             if(blocks[segment][3] == 77){
-              turnDistance = 50;
+              turnDistance = 55;
               lane = 3;
               currentLane = 3;
             }else{
@@ -1062,7 +1086,6 @@ void rightTurn(int segment){
 
 }
 
-
 void rightTurnBlind(int segment){
   sendDataln("turning Left");
   //setMotor(0);
@@ -1104,7 +1127,7 @@ void rightTurnBlind(int segment){
               delay(1);  // Wait for the block to disappear
               sendDataln("Waiting for disspaear");
             }
-          
+          delay(350);
 
             targetAngle-=90;
             setAngle(targetAngle);
@@ -1141,7 +1164,7 @@ void rightTurnBlind(int segment){
       }
      
       setAngle(targetAngle-90);
-      waitForAngle(targetAngle-60);
+      waitForAngle(targetAngle-63);
     // setMotor(0);
       //delay(5000);
       getCamera(segment);
@@ -1171,7 +1194,7 @@ void rightTurnBlind(int segment){
             int turnDistance = 0;
 
             if(blocks[segment][3] == 77){
-              turnDistance = 50;
+              turnDistance = 55;
               lane = 3;
               currentLane = 3;
             }else{
@@ -1302,9 +1325,11 @@ void handleMagenta(int segment){
 
     blocks[segment][3] = 77;
    
-
-    for (int i = 0; i<5; i++){ //Roll the camera contents one forward
-    cameraContents[0][i] = cameraContents[1][i];
+    while(cameraContents[0][0] == 77){//Magenta
+      for (int i = 0; i<5; i++){ //Roll the camera contents one forward
+      cameraContents[0][i] = cameraContents[1][i];
+      cameraContents[1][i] = cameraContents[2][i];
+      }
     }
   }
   
@@ -1330,9 +1355,10 @@ void handleMagenta(int segment){
 }
 
 void updateLaneMidBlock(int segment){
+  printBlocks();
   // while(getDistance(front)>=210){
 
-  //   sendDataln("Waiting to update lane");
+ //  sendDataln("Waiting to update lane");
   // }
  
   getCamera(segment);
@@ -1343,9 +1369,7 @@ void updateLaneMidBlock(int segment){
 
   
     lane = 0;
-    if(!firstLoop){
-    blocks[segment][1] = 71;
-    }
+   
     blocks[segment][2] = 71;
 
     
@@ -1354,9 +1378,7 @@ void updateLaneMidBlock(int segment){
     
     sendDataln("RED");
     lane = 1;
-     if(!firstLoop){
-    blocks[segment][1] = 82;
-     }
+   
     blocks[segment][2] = 82;
 
   }else{
@@ -1364,12 +1386,12 @@ void updateLaneMidBlock(int segment){
     //lane = 3;
     //currentLane = 3;
     sendData("Nothing");
-    blocks[segment][1] = 0;
+   
     blocks[segment][2] = 0;
     waitForWall(20);
 
   }
-   if ((currentLane == 1 && !turnRight && blocks[segment][3] != 0) || (currentLane == 0 && turnRight && blocks[segment][3] != 0)){ //If you are about to collide with the parking area.
+   if ((currentLane == 1 && !turnRight && blocks[segment][3] != 0) || (currentLane == 3 && blocks[segment][3] != 0 && !turnRight && lane == 1) || (currentLane == 3 && blocks[segment][3] != 0 && turnRight && lane == 0) || (currentLane == 0 && turnRight && blocks[segment][3] != 0)){ //If you are about to collide with the parking area.
     lane = 3;
     currentLane = 3;
     sendDataln("Magenta Behaviour");
@@ -1378,6 +1400,36 @@ void updateLaneMidBlock(int segment){
   }
   
   updateLEDLane();
+}
+
+void printBlocks(){
+  sendData(blocks[2][3]);
+  sendData("\t");
+  sendData(blocks[2][2]);
+  sendData("\t");
+  sendData(blocks[2][0]);
+  sendDataln("");
+
+
+  sendData(blocks[3][0]);
+  sendData("\t\t\t");
+  sendDataln(blocks[1][3]);
+  sendData(blocks[3][2]);
+  sendData("\t\t\t");
+  sendDataln(blocks[1][2]);
+  sendData(blocks[3][3]);
+  sendData("\t\t\t");
+  sendDataln(blocks[1][0]);
+
+  sendData(blocks[0][0]);
+  sendData("\t");
+  sendData(blocks[0][2]);
+  sendData("\t");
+  sendData(blocks[0][3]);
+  sendDataln("");
+
+
+
 }
 
 
@@ -1392,36 +1444,36 @@ void updateLaneMidBlockBlind(int segment){
  sendDataln("Updateing mid lane");
  //delay(2000);
   
-  if (blocks[segment][1] == 71){
+  if (blocks[segment][2] == 71){
   
 
   
     lane = 0;
     
-    blocks[segment][1] = 71;
+
     blocks[segment][2] = 71;
 
     
 
-  }else if (blocks[segment][1] == 82){
+  }else if (blocks[segment][2] == 82){
     
     sendDataln("RED");
     lane = 1;
     
-    blocks[segment][1] = 82;
+    
     blocks[segment][2] = 82;
 
   }else{
 
    
     sendData("Nothing");
-    blocks[segment][1] = 0;
+
     blocks[segment][2] = 0;
     waitForWall(20);
 
   }
-  if ((currentLane == 1 && !turnRight && blocks[segment][3] != 0) || (currentLane == 0 && turnRight && blocks[segment][3] != 0)){ //If you are about to collide with the parking area.
-    lane = 3;
+ if ((currentLane == 1 && !turnRight && blocks[segment][3] != 0) || (currentLane == 3 && blocks[segment][3] != 0 && !turnRight && lane == 1) || (currentLane == 3 && blocks[segment][3] != 0 && turnRight && lane == 0) || (currentLane == 0 && turnRight && blocks[segment][3] != 0)){ //If you are about to collide with the parking area.
+     lane = 3;
     currentLane = 3;
     sendDataln("Magenta Behaviour");
     strip.setPixelColor(4, strip.Color(255, 0, 255));
@@ -1452,10 +1504,10 @@ void updateLEDLane(){
 void updatePixelMap(){
 
   int pixelMap[4][2] = {
-    {2, 1}, // Bottom row (right to left)
-    {0, 5}, // Second-to-bottom row
-    {6, 7}, // Second row
-    {8, 3}  // Top row
+    {2, 1}, // Right hand row
+    {0, 5}, // Top Row
+    {6, 7}, // Left Row
+    {8, 3}  // Bottom row
   };
 
   for (int x = 0; x < 4; x++) {
@@ -1470,6 +1522,19 @@ void updatePixelMap(){
       }
     }
   }
+  // This is bad, I do not have the energy to make it better
+  // if(blocks[0][3] != 0){ //Magenta in zone 0
+  //    strip.setPixelColor(0, strip.Color(255, 0, 255)); // Magenta
+  // }
+  // if(blocks[1][3] != 0){ //Magenta in zone 1
+  //    strip.setPixelColor(0, strip.Color(255, 0, 255)); // Magenta
+  // }
+  // if(blocks[2][3] != 0){ //Magneta in zone 2
+  //    strip.setPixelColor(0, strip.Color(255, 0, 255)); // Magenta
+  // }
+  // if(blocks[3][3] != 0){ //magenta in zone 3
+  //    strip.setPixelColor(3, strip.Color(255, 0, 255)); // Magenta
+  // }
   strip.show(); // Apply updates
 
 }

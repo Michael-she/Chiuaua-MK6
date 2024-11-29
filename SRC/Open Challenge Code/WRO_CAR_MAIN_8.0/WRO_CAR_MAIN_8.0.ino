@@ -9,7 +9,7 @@
 #include <TFLI2C.h>  // TFLuna-I2C Library v.0.1.1
 TFLI2C tflI2C;
 
-int numShots = 20;
+int numShots = 5;
 
 int8_t front = 0x61;
 int8_t left = 0x62;
@@ -34,6 +34,7 @@ void setup() {
    Serial.println("HEllo World");
   Wire1.setSDA(2);
   Wire1.setSCL(3);
+  Wire.setClock(100000);
   Wire1.begin();
   delay(2000);
 
@@ -69,13 +70,14 @@ int startingLeftDistance = getDistance(left);
     delay(2500);
     waitForTargetAngle();
       waitForWall();
-    for (int i = 0; i < 1; i++) {
+    for (int i = 0; i < 10; i++) {
       goFourth();
       waitForTargetAngle();
+      delay(2500);
       waitForWall();
      // delay(500);
        if(turnRight){
-      targetAngle+=1;//The gyro is off by 3 degrees per lap
+     targetAngle+=1;//The gyro is off by 3 degrees per lap
   
     }else{
       targetAngle -=1;
@@ -109,6 +111,9 @@ while(true){
   }
   delay(1);
   frontDist = getDistance(front);
+  Serial.print(frontDist);
+  Serial.print("/");
+  Serial.println(startingFrontDistace);
 }
 
    setMotor(0);
@@ -162,7 +167,7 @@ distanceFromOutsideWall = leftDistance;
 int frontDist = getDistance(front);
 int frontCount = 0;
 while(true){
-  if(frontDist<distanceFromOutsideWall+7 && frontDist != -1){
+  if(frontDist<distanceFromOutsideWall+10 && frontDist != -1){
     frontCount++;
   }else{
     frontCount = 0;
@@ -200,7 +205,7 @@ void goFourth() {
       Serial.println(rightDist);
 
 
-      if (rightDist > 100) {
+      if (rightDist > 80) {
         rightCounter++;
 
       } else {
@@ -229,7 +234,7 @@ void goFourth() {
 
       Serial.println(leftDist);
 
-      if (leftDist > 100) {
+      if (leftDist > 80) {
         leftCounter++;
       } else {
         leftCounter = 0;
@@ -246,7 +251,23 @@ void goFourth() {
         delay(500);
         setAngle(targetAngle);
       }
+      
     }
+   
+      if(frontDist < 30 && frontDist != -1 && frontDist != 0){
+        if(turnRight){
+          turnRight = true;
+        targetAngle -= 90;
+        }else{
+         
+          turnRight = false;
+        targetAngle += 90;
+        
+        }
+        edgeFound = true;
+        Serial.println("----------------SENSOR BORKED ---------------------");
+      }
+
   }
 }
 void firstMovement() {
@@ -312,6 +333,7 @@ void firstMovement() {
 }
 
 void waitForTargetAngle() {
+  setMotor(7);
   setAngle(targetAngle);
 
   while (getAngle() > targetAngle + 2 || getAngle() < targetAngle - 2) {
@@ -345,32 +367,23 @@ void waitForWall(){
         rightCounter = 0;
         
       }
-      if (rightCounter == numShots*1) {
+      if (rightCounter >= numShots*10) {
         wallFound = true;
       }
-
-
-
-
+      
     } else {
       int leftDist = getDistance(left);
-
-
       Serial.println(leftDist);
-
       if (leftDist < 100) {
         leftCounter++;
       } else {
         leftCounter = 0;
-
       }
-
-
-
-      if (leftCounter == numShots*1) {
+      if (leftCounter >= numShots*10) {
         wallFound = true;
       
       }
+   
     }
 
   }
@@ -393,12 +406,27 @@ int getDistance(int8_t tfAddr) {
   int16_t tfDist = 0;
   if (tflI2C.getData(tfDist, tfAddr))  // If read okay...
   {
-    // Serial.print("Dist: ");
-    //Serial.println(tfDist);          // print the data...
+    // sendData("Dist: ");
+    //sendDataln(tfDist);          // print the data...
+    if(tfDist == 0){
+    Wire.beginTransmission(tfAddr);
+    delay(10); // Wait for sensor to reset
+    Wire.endTransmission();
+    }
+    delay(10);
+    setMotor(7);
+    delay(10);
     return tfDist;
   }
+  Wire.beginTransmission(tfAddr);
+  
+  setMotor(2);
+  delay(10); // Wait for sensor to reset
+  
+  Wire.endTransmission();
   return -1;
 }
+
 
 
 int getLidarAngle(int angleIn) {
