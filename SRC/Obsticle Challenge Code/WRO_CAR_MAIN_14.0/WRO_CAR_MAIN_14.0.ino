@@ -199,6 +199,10 @@ void loop() {
   }
   }
 
+  // while(true){
+  //   printBlocks();
+  //   delay(1000);
+  // }
   //Fix the gyro drift
   if(turnRight){
       targetAngle-=1;//The gyro is off by 3 degrees per lap
@@ -260,7 +264,7 @@ void loop() {
   if(i == 1){
     firstLoop = false;
   }
-    if(!backwards || i != 0){
+    if((backwards == false) || i != 0){
     updateLaneMidBlockBlind(segment);
     transferLanes45();
     }
@@ -294,15 +298,18 @@ void loop() {
   delay(5500);
   setMotor(7);
 
+if(turnRight){
+  lane == 1;
+  }else{
+    lane == 0;
+  }
+transferLanes45();
 goPark();
 
 
   delay(20000);
 
-  // while(true){
-  //   printBlocks(blocks);
-  //   delay(1000);
-  // }
+
    
 
 }
@@ -313,13 +320,16 @@ void handleGoAround(){
   //Evaluating this as one condition will hurt my brain
   if(blocks [0][1] == 82 ){
     sendDataln("condition0");
-  waitForFrontWall(125);
+    updateLaneMidBlockBlind(0);
+    transferLanes45();
   turn = true;
   
   }
   
   else if(blocks[0][0] == 82){
     turn = true;
+    updateLaneMidBlockBlind(0);
+    transferLanes45();
     sendDataln("condition1");
   }
   else if (blocks[3][2] == 82 && blocks[0][0] == 0){
@@ -333,11 +343,12 @@ void handleGoAround(){
  
 if(turn){
   
-turnRight= !(turnRight);
+  turnRight= !(turnRight);
   reverseBlocks();
   
   backwards = true;
   turnAround();
+  waitForWallToBeGone();
   delay(500);
 }
  
@@ -402,7 +413,7 @@ void turnAround(){
     }
     targetAngle +=90;
     setAngle(targetAngle);
-    
+   
   
 
 }
@@ -440,17 +451,20 @@ void goPark(){
     
 
     for(int i = 0; i<distance; i++){
+      waitForWall(50);
       int distance =getDistance(sensor);
       while( distance< 120 ){
         delay(1);
         distance =getDistance(sensor);
       }
+
       delay(400);
       targetAngle += ajustment;
       setAngle(targetAngle);
       delay(3000);
 
     }
+    delay(1500);
 
     if(turnRight){
     while(getDistance(right)<100){  
@@ -464,12 +478,8 @@ void goPark(){
     waitForTargetAngle();
 
     }
-    int turnDistance = 47;
-
-    while(getDistance(front)>turnDistance){
-      delay(1);
-
-    }
+    
+    waitForFrontWall(45);
     targetAngle -= 90;
     setAngle(targetAngle);
     waitForTargetAngle();
@@ -477,8 +487,10 @@ void goPark(){
 
 
   
-      while(getDistance(left)>18){
-        delay(1);
+      int distToWall = getDistance(left);
+      while(distToWall>18 || distToWall == -1){
+        delay(5);
+        distToWall = getDistance(left);
       }
       delay(300);
       targetAngle+=90;
@@ -499,26 +511,24 @@ void goPark(){
 
     int turnDistance = 47;
 
-    while(getDistance(front)>turnDistance){
-      delay(1);
-
-    }
+    waitForFrontWall(45);
     targetAngle += 90;
     setAngle(targetAngle);
     waitForTargetAngle();
       
 
 
-  
-      while(getDistance(right)>18){
-        delay(1);
+      int distToWall = getDistance(right);
+      while(distToWall>18 || distToWall == -1){
+        delay(5);
+        distToWall = getDistance(right);
       }
       delay(300);
       targetAngle-=90;
     }
       setAngle(targetAngle);
       //setMotor(7);
-      delay(3000);
+      delay(5000);
       setMotor(0);
 }
 
@@ -539,6 +549,7 @@ void transferLanes45(){
       sensor = right45;
       tmpAngle -=45;
       currentLane ==1;
+      
     }else if (lane == 0){
       sensor=left45;
       tmpAngle +=45;
@@ -551,10 +562,20 @@ void transferLanes45(){
           sendDataln("Moving right");
           sensor = right45;
           tmpAngle -= 45;
+          if(turnRight){
+        exitForMagentaLength = 50;
+      }else{
+        exitForMagentaLength = 30;
+      }
         }else{
           sendDataln("Moving Left");
           sensor = left45;
           tmpAngle+=45;
+          if(turnRight){
+        exitForMagentaLength = 30;
+      }else{
+        exitForMagentaLength = 50;
+      }
         }
         currentLane = 3;
 
@@ -577,10 +598,13 @@ void transferLanes45(){
     }
 
     }else{
+
       while(distance > exitForMagentaLength || distance == -1){
       distance = getDistance(sensor);
       sendData("Distance to wall 45: ");
       sendDataln(distance);
+      sendData("  // ");
+      sendDataln(exitForMagentaLength);
      // setAngle(int targetAngleLocal)
 
   delay(1);
@@ -1087,7 +1111,7 @@ void rightTurn(int segment){
 }
 
 void rightTurnBlind(int segment){
-  sendDataln("turning Left");
+  sendDataln("turning Right");
   //setMotor(0);
     if (lane == 1){
 
@@ -1391,9 +1415,9 @@ void updateLaneMidBlock(int segment){
     waitForWall(20);
 
   }
-   if ((currentLane == 1 && !turnRight && blocks[segment][3] != 0) || (currentLane == 3 && blocks[segment][3] != 0 && !turnRight && lane == 1) || (currentLane == 3 && blocks[segment][3] != 0 && turnRight && lane == 0) || (currentLane == 0 && turnRight && blocks[segment][3] != 0)){ //If you are about to collide with the parking area.
+   if ((lane == 1 && !turnRight && blocks[segment][3] != 0) || (currentLane == 3 && blocks[segment][3] != 0 && !turnRight && lane == 1) || (currentLane == 3 && blocks[segment][3] != 0 && turnRight && lane == 0) || (lane == 0 && turnRight && blocks[segment][3] != 0)){ //If you are about to collide with the parking area.
     lane = 3;
-    currentLane = 3;
+   // currentLane = 3;
     sendDataln("Magenta Behaviour");
     strip.setPixelColor(4, strip.Color(255, 0, 255));
     strip.show();
@@ -1403,24 +1427,29 @@ void updateLaneMidBlock(int segment){
 }
 
 void printBlocks(){
+  sendDataln("BLOCKS:");
   sendData(blocks[2][3]);
   sendData("\t");
   sendData(blocks[2][2]);
   sendData("\t");
   sendData(blocks[2][0]);
   sendDataln("");
-
+  sendDataln("--------");
 
   sendData(blocks[3][0]);
-  sendData("\t\t\t");
-  sendDataln(blocks[1][3]);
+  sendData("\t\t");
+  sendData(blocks[1][3]);
+  sendDataln("");
   sendData(blocks[3][2]);
-  sendData("\t\t\t");
-  sendDataln(blocks[1][2]);
+  sendData("\t\t");
+  sendData(blocks[1][2]);
+   sendDataln("");
   sendData(blocks[3][3]);
-  sendData("\t\t\t");
-  sendDataln(blocks[1][0]);
+  sendData("\t\t");
+  sendData(blocks[1][0]);
+   sendDataln("");
 
+  sendDataln("--------");
   sendData(blocks[0][0]);
   sendData("\t");
   sendData(blocks[0][2]);
